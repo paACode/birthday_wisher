@@ -94,4 +94,6 @@ __pycache__/
 *.csv
 *.png
 
+#Secure PW
+my_credentials.txt
 
