@@ -95,5 +95,5 @@ __pycache__/
 *.png
 
 #Secure PW
-my_credentials.txt
+*.txt
 
