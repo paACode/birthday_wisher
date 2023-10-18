@@ -29,7 +29,6 @@ def read_birthdays_from_csv():
 def get_all_birthdays_of_today(today):
     day_mask = all_birthdays['day'] == today.day
     month_mask = all_birthdays['month'] == today.month
-    print(today.month)
     return all_birthdays[day_mask & month_mask]
 
 
@@ -75,10 +74,18 @@ def get_keywords_of_the_month(month):
 def get_letter_template(including_keywords):
     letter_template = openai.Completion.create(
         engine="gpt-3.5-turbo-instruct",
-        prompt=f"Generate a birthday letter with [for_name] and [from_name]. Include the words {including_keywords}. Max. 3 sentences",
+        prompt=f"Generate a birthday letter with [for_name] and [from_name]. Include the words {including_keywords}. "
+               f"Max. 3 sentences",
         max_tokens=200
     )
     return letter_template.choices[0].text.strip()
+
+
+def get_this_months_letter(month):
+    month_name = calendar.month_name[month]
+    with open(f'letters/{month_name}.txt', "r") as file:
+        this_months_letter = file.read()
+    return this_months_letter
 
 
 def create_letter_template_as_txt(month):
@@ -87,10 +94,14 @@ def create_letter_template_as_txt(month):
     with open(f'letters/{month}.txt', 'w') as f:
         f.write(template)
 
+
 def create_templates_for_all_months():
-    for month in range(1,12):
+    for month in range(1, 12):
         create_letter_template_as_txt(calendar.month_name[month])
 
+def add_to_log(this_birthday):
+    with open(f'log_file.txt', 'w') as f:
+        f.write(f'{this_birthday} sent on {dt.datetime.now()}')
 
 if __name__ == '__main__':
     cwd = os.getcwd()
@@ -98,8 +109,15 @@ if __name__ == '__main__':
     today_birthdays = get_all_birthdays_of_today(dt.datetime.now())
     sender_email, sender_password, openai_key = get_credentials()
     openai.api_key = openai_key.strip()
-    create_templates_for_all_months()
-    #create_letter_template_as_txt(calendar.month_name[dt.datetime.now().month])
+    # create_templates_for_all_months()
+    get_random_letter()
+    for birthday in today_birthdays.itertuples():
+        letter = get_this_months_letter(birthday.month)
+        personal_letter = letter.replace("[for_name]", birthday.name)
+        personal_letter = personal_letter.replace("[from_name]", "Pascal")
+        write_email(personal_letter)
+        #add_to_log(birthday)
+
 
 # 4. Send the letter generated in step 3 to that person's email address.
 # HINT: Gmail(smtp.gmail.com), Yahoo(smtp.mail.yahoo.com), Hotmail(smtp.live.com), Outlook(smtp-mail.outlook.com)
